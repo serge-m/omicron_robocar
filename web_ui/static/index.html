@@ -11,7 +11,10 @@
 
 <body>
 
-    <div ng-app="myApp" ng-controller="personCtrl">
+
+    <div ng-app="myApp" ng-controller="launcherCtrl">
+        <label style="font-size: 20px; font-weight: bold;">Connected Clients : </label>
+        <label style="font-size: 40px; font-weight: bold;">{{ numberOfUsersConnected }}</label>
 
         First Name: <input type="text" ng-model="firstName"><br>
         Last Name: <input type="text" ng-model="lastName"><br>
@@ -24,24 +27,17 @@
 
 
         <h1>Robocar launch console</h1>
-        <p>Status: <span id="robocar_status"></span> </p>
-        <ol id="l"></ol>
+        <p>Status: {{ connectionStatus }} </p>
+        
+        <div ng-repeat="nodeName in nodeNames">
+            <button ng-click="startScript(nodeName)">Start {{ nodeName }}</button>
+            <button ng-click="stopScript(nodeName)">Stop {{ nodeName }}</button>
+            <p >launch: {{ nodeStatuses[nodeName] }}</p>
+        </div>
 
     </div>
 
-    <!-- <script>
-        var l = document.getElementById('l');
-        function log(m) {
-            var i = document.createElement('li');
-            i.innerText = new Date().toISOString() + ' ' + m;
-            l.appendChild(i);
-        }
-        log('opening websocket connection');
-        var s = new WebSocket('ws://' + window.location.host + '/');
-        s.addEventListener('error', function (m) { log("error"); });
-        s.addEventListener('open', function (m) { log("websocket connection open"); });
-        s.addEventListener('message', function (m) { log(m.data); });
-    </script> -->
+
 </body>
 
 </html>
