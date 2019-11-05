@@ -1,3 +1,47 @@
-<script src="/node_modules/angular/angular.js"></script>
+<!doctype html>
+<html lang=en>
 
-hello world
+<head>
+    <meta charset=utf-8>
+    <meta name=viewport content="width=device-width, initial-scale=1">
+    <title>Robocar launch console</title>
+</head>
+
+<script src="js/angular.min.js"></script>
+
+<body>
+
+    <div ng-app="myApp" ng-controller="personCtrl">
+
+        First Name: <input type="text" ng-model="firstName"><br>
+        Last Name: <input type="text" ng-model="lastName"><br>
+        <br>
+        Full Name: {{fullName()}}
+
+
+
+        <script src="js/my_controller.js"></script>
+
+
+        <h1>Robocar launch console</h1>
+        <p>Status: <span id="robocar_status"></span> </p>
+        <ol id="l"></ol>
+
+    </div>
+
+    <!-- <script>
+        var l = document.getElementById('l');
+        function log(m) {
+            var i = document.createElement('li');
+            i.innerText = new Date().toISOString() + ' ' + m;
+            l.appendChild(i);
+        }
+        log('opening websocket connection');
+        var s = new WebSocket('ws://' + window.location.host + '/');
+        s.addEventListener('error', function (m) { log("error"); });
+        s.addEventListener('open', function (m) { log("websocket connection open"); });
+        s.addEventListener('message', function (m) { log(m.data); });
+    </script> -->
+</body>
+
+</html>
