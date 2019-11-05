@@ -1,15 +1,8 @@
 angular.module('myApp', []).controller('launcherCtrl', function ($scope) {
-    $scope.firstName = "John";
-    $scope.lastName = "Doe";
-    $scope.fullName = function () {
-        return $scope.firstName + " " + $scope.lastName;
-    };
-
-    $scope.scriptStatus = "unknown"
-    $scope.nodeNames = ["dummy_script", "dummy_script_failing"]
-    $scope.nodeStatuses = $scope.nodeNames.map((x)=> "");
-
     $scope.connectionStatus = "";
+
+    $scope.nodeNames = ["dummy_script", "dummy_script_failing"]
+    $scope.nodeStatuses = $scope.nodeNames.map((x) => "unknown");
 
     $scope.getSocketUrl = function () {
         return 'ws://' + window.location.host + '/';
@@ -28,7 +21,7 @@ angular.module('myApp', []).controller('launcherCtrl', function ($scope) {
 
     websocket.onerror = function (evt) {
         console.error('websocket error: ' + evt);
-        
+        $scope.connectionStatus = "error";
     };
 
     websocket.onclose = function () {
@@ -40,16 +33,16 @@ angular.module('myApp', []).controller('launcherCtrl', function ($scope) {
 
         $scope.$apply(function () {
             if (msg_json.command == "update_status") {
-                $scope.nodeStatuses[msg_json.name] = 
-                    "status: " + msg_json.status + 
-                    ", return_code: " + msg_json.return_code + 
+                $scope.nodeStatuses[msg_json.name] =
+                    "status: " + msg_json.status +
+                    ", return_code: " + msg_json.return_code +
                     ", output: " + msg_json.data;
             }
         });
     };
 
     $scope.startScript = function (nodeName) {
-        $scope.scriptStatus = $scope.scriptStatus + ", starting...";
+        $scope.nodeStatuses[nodeName] += ", starting...";
         websocket.send(JSON.stringify({
             "command": "start",
             "name": nodeName
@@ -57,7 +50,7 @@ angular.module('myApp', []).controller('launcherCtrl', function ($scope) {
     };
 
     $scope.stopScript = function (nodeName) {
-        $scope.scriptStatus = $scope.scriptStatus + ", stopping...";
+        $scope.nodeStatuses[nodeName] += ", stopping...";
         websocket.send(JSON.stringify({
             "command": "stop",
             "name": nodeName

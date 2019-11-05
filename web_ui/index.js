@@ -107,7 +107,7 @@ function process_stop(name) {
     process_info.process = null;
 }
 
-function process_message(msg_json) {
+function process_command(msg_json) {
   console.log("Processing ", msg_json);
   if (msg_json.command == "start") {
     return process_start(msg_json.name);
@@ -118,13 +118,9 @@ function process_message(msg_json) {
 }
 
 app.ws('/', (ws, req) => {
-  
-  console.error('connected..');
-
   ws.on('message', function (msg) {
-    console.log(msg);
     msg_json = JSON.parse(msg);
-    process_message(msg_json);
+    process_command(msg_json);
   });
 
   ws.on('error', function (err) {
@@ -136,7 +132,7 @@ app.ws('/', (ws, req) => {
   });
 
   socket_clients.push(ws);
-  console.info("num clients: ", socket_clients.length);
+  console.info("Client connected. num clients: ", socket_clients.length);
 });
 
 
