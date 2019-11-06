@@ -7,8 +7,8 @@ const appWS = expressWS(app);
 const port = 3000;
 const { spawn } = require('child_process');
 
-const logCommandsOutput = false;
-const numCharsToSave = 100;
+const logCommandsOutput = true;
+const numCharsToSave = 500;
 
 app.get('/', (request, response) => {
   console.log("root endpoint");
@@ -17,23 +17,25 @@ app.get('/', (request, response) => {
 
 app.use('/static', express.static(path.join(__dirname, 'static')))
 
-tracked_processes = {
-  "dummy_script": {
+function makeProcessInfo(command, args) {
+  return {
+    "command": command,
+    "args": args,
+    
     "process": null,
     "output": "",
     "update_function": null,
-    "command": 'python',
-    "args": ['dummy_script.py'],
     "return_code": null
-  },
-  "dummy_script_failing": {
-    "process": null,
-    "output": "",
-    "update_function": null,
-    "command": 'python',
-    "args": ['dummy_script_failing.py'],
-    "return_code": null
-  }
+  };
+}
+
+var tracked_processes = {
+  "dummy_script": makeProcessInfo('python', ['dummy_script.py']),
+  "dummy_script_failing": makeProcessInfo('python', ['dummy_script_failing.py']),
+  "rosbag record": makeProcessInfo(
+    "sh", 
+    ["-c", "rosbag record --duration=180s -o robocar_recording_ /raspicam_node/image/compressed /pwm_radio_arduino/radio_pwm"]
+  )
 };
 
 var socket_clients = [];
@@ -78,19 +80,33 @@ function process_start(name) {
       return;
     }
     console.error("starting process " + name);
-    var p = spawn(process_info.command, process_info.args, { stdio: ['pipe'] });
-
-    p.stdout.on('data', function (data) {
+    try {
+      var p = spawn(process_info.command, process_info.args, { stdio: ['pipe'] });
+    } catch (error) {
+      process_info.output = `failed to launch. ${error}`;
+      return;
+    }
+    
+    function processOutput(data) {
       if (logCommandsOutput) {
         console.debug(name + ": " + data.toString().replace("\n", "\\n"));
       }
       process_info.output = (process_info.output + data.toString()).slice(-numCharsToSave);
-    });
+    };
+    p.stdout.on('data', processOutput);
+    p.stderr.on('data', processOutput);
+
     p.on('close', (code) => {
       console.log(`process ${process_info.command} ${process_info.args} exited with code ${code}`);
       process_info.return_code = code;
       process_info.process = null;
     });
+    p.on('error', (err) => {
+      console.log(`process ${process_info.command} ${process_info.args} resulted in error ${err}`);
+      process_info.return_code = null;
+      process_info.output = `${err}`;
+    });
+
 
     process_info.process = p;
     process_info.return_code = null;
@@ -119,8 +135,12 @@ function process_command(msg_json) {
 
 app.ws('/', (ws, req) => {
   ws.on('message', function (msg) {
-    msg_json = JSON.parse(msg);
-    process_command(msg_json);
+    try {
+      msg_json = JSON.parse(msg);
+      process_command(msg_json);
+    } catch (error) {
+      console.error(`Failed to process message ${msg}. Error ${error}. Continue processing...`);
+    }
   });
 
   ws.on('error', function (err) {
